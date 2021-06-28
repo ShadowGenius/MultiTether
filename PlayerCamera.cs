@@ -8,52 +8,58 @@ namespace MultiTether
 {
     public class PlayerCamera : ModPlayer
     {
+        public override bool CloneNewInstances => true;
         public override void PreUpdate()
         {
-            bool matchingPlayerCamera = false;
-            if (Main.ActivePlayersCount > 1 && player.active && !player.dead)
+            int matchingCamera = -1;
+            if (player.active && !player.dead)
             {
+
                 for (int i = 0; i < Main.maxNPCs; i++)
                 {
-                    if (Main.npc[i].type == ModContent.NPCType<CameraCenter>() && Main.npc[i].ai[0] == player.whoAmI)
+                    if (Main.npc[i].type == ModContent.NPCType<CameraCenter>() && Main.npc[i].ai[0] == player.whoAmI + 1 && Main.npc[i].active)
                     {
-                        matchingPlayerCamera = true;
+                        matchingCamera = i;
                         break;
                     }
                 }
-                if (!matchingPlayerCamera)
+                if (matchingCamera == -1)
                 {
-                    int matchingCamera = NPC.NewNPC((int)player.Center.X, (int)player.Center.Y, ModContent.NPCType<CameraCenter>());
-                    Main.npc[matchingCamera].ai[0] = player.whoAmI;
-                    Main.npc[matchingCamera].ai[1] = player.team;
+                    matchingCamera = NPC.NewNPC((int)player.Center.X, (int)player.Center.Y, ModContent.NPCType<CameraCenter>(), 0, player.whoAmI + 1, player.team);
                 }
 
-                for (int i = 0; i < Main.maxNPCs; i++)
+                NPC npc = Main.npc[matchingCamera];
+                if (npc.type == ModContent.NPCType<CameraCenter>() && npc.ai[1] == player.team && !WithinRange(npc, Main.screenWidth / 2, Main.screenHeight / 2) && WithinRange(npc, (Main.screenWidth / 2) + 100, (Main.screenHeight / 2) + 100))
                 {
-                    NPC npc = Main.npc[i];
-                    MultiTether multiTether = ModContent.GetInstance<MultiTether>();
-                    if (npc.type == ModContent.NPCType<CameraCenter>() && npc.ai[1] == player.team && !WithinRange(npc, Main.screenWidth / 2, Main.screenHeight / 2) && WithinRange(npc, Main.screenWidth / 2 + 100, Main.screenHeight / 2 + 100))
-                    {
-                        player.fallStart = (int)(player.position.Y / 16f);
-                        PlayerDrag(i);
-                        player.position += player.velocity;
+                    player.fallStart = (int)(player.position.Y / 16f);
+                    PlayerDrag(matchingCamera);
+                    player.position += player.velocity;
 
-                        //player.velocity = 10 * Vector2.Normalize(npc.Center - player.Center);
-                    }
+                    //player.velocity = 10 * Vector2.Normalize(npc.Center - player.Center);
                 }
             }
-            //string text = "Player position: " + player.Center.X.ToString() + ", " + player.Center.Y.ToString();
-            //Main.NewText(text);
+            else
+            {
+                if (matchingCamera != -1)
+                {
+                    Main.npc[matchingCamera].life = 0;
+                    Main.npc[matchingCamera].active = false;
+                    matchingCamera = -1;
+                }
+            }
+            Main.NewText("Matching camera: " + matchingCamera.ToString());
+            Main.NewText("Player position: " + player.Center.X.ToString() + ", " + player.Center.Y.ToString());
+            Main.NewText("Player Identity: " + player.whoAmI.ToString());
         }
 
         public override void ModifyScreenPosition()
         {
-            if (player.active && !player.dead && Main.ActivePlayersCount > 1)
+            if (player.active && !player.dead)
             {
                 for (int i = 0; i < Main.maxNPCs; i++)
                 {
                     NPC npc = Main.npc[i];
-                    if (npc.type == ModContent.NPCType<CameraCenter>() && npc.ai[0] == player.whoAmI)
+                    if (npc.type == ModContent.NPCType<CameraCenter>() && npc.ai[0] == player.whoAmI + 1 && Main.npc[i].active)
                     {
                         Main.screenPosition = npc.Center;
                         Main.screenPosition.X -= Main.screenWidth / 2f;

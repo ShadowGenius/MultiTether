@@ -27,7 +27,8 @@ namespace MultiTether.NPCs
             npc.dontTakeDamage = true;
             npc.immortal = true;
             npc.chaseable = false;
-            npc.timeLeft = 22500;
+            npc.timeLeft = 2;
+            npc.netAlways = true;
             base.SetDefaults();
         }
 
@@ -41,8 +42,15 @@ namespace MultiTether.NPCs
             for (int i = 0; i < Main.maxPlayers; i++)
             {
                 Player player = Main.player[i];
+                if (player.whoAmI == npc.ai[0] + 1 && (player.dead || !player.active || !player.GetModPlayer<PlayerCamera>().WithinRange(npc, Main.screenWidth + 10, Main.screenHeight + 10)))
+                {
+                    npc.life = 0;
+                    npc.active = false;
+                }
+
                 if (player.active && !player.dead && player.GetModPlayer<PlayerCamera>().WithinRange(npc, Main.screenWidth, Main.screenHeight) && player.team == npc.ai[1])
                 {
+                    npc.timeLeft = 2;
                     if (player.BottomRight.X > maxPosX)
                     {
                         maxPosX = player.BottomRight.X;
@@ -65,9 +73,10 @@ namespace MultiTether.NPCs
             Vector2 cameraCenter;
             cameraCenter.X = (maxPosX + minPosX) / 2f;
             cameraCenter.Y = (maxPosY + minPosY) / 2f;
-
-            //string text = "Camera position: " + cameraCenter.X.ToString() + ", " + cameraCenter.Y.ToString();
-            //Main.NewText(text);
+            
+            Main.NewText("Camera position: " + cameraCenter.X.ToString() + ", " + cameraCenter.Y.ToString());
+            Main.NewText("Camera Player: " + npc.ai[0].ToString());
+            Main.NewText("Camera Team: " + npc.ai[1].ToString());
             
             if (Vector2.Distance(npc.Center, cameraCenter) <= 10)
             {
@@ -77,7 +86,7 @@ namespace MultiTether.NPCs
             else
             {
                 //npc.velocity = speed * Vector2.Normalize(cameraCenter - npc.Center);
-                npc.velocity = cameraCenter - npc.Center;
+                npc.velocity = (cameraCenter - npc.Center) / 2;
             }
         }
     }
