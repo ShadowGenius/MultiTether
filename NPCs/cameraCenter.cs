@@ -17,18 +17,18 @@ namespace MultiTether.NPCs
         {
             //npc.width = Main.screenWidth;
             //npc.height = Main.screenHeight;
-            npc.width = 1;
-            npc.height = 1;
-            npc.lifeMax = 100;
-            npc.aiStyle = -1;
-            npc.noGravity = true;
-            npc.noTileCollide = true;
-            npc.dontCountMe = true;
-            npc.dontTakeDamage = true;
-            npc.immortal = true;
-            npc.chaseable = false;
-            npc.timeLeft = 2;
-            npc.netAlways = true;
+            NPC.width = 1;
+            NPC.height = 1;
+            NPC.lifeMax = 100;
+            NPC.aiStyle = -1;
+            NPC.noGravity = true;
+            NPC.noTileCollide = true;
+            NPC.dontCountMe = true;
+            NPC.dontTakeDamage = true;
+            NPC.immortal = true;
+            NPC.chaseable = false;
+            NPC.timeLeft = 22500;
+            NPC.netAlways = true;
             base.SetDefaults();
         }
 
@@ -42,15 +42,19 @@ namespace MultiTether.NPCs
             for (int i = 0; i < Main.maxPlayers; i++)
             {
                 Player player = Main.player[i];
-                if (player.whoAmI == npc.ai[0] + 1 && (player.dead || !player.active || !player.GetModPlayer<PlayerCamera>().WithinRange(npc, Main.screenWidth + 10, Main.screenHeight + 10)))
+                if (player.whoAmI == NPC.ai[0] + 1 && player.active && !player.dead)
                 {
-                    npc.life = 0;
-                    npc.active = false;
+                    NPC.ai[1] = player.team;
+
+                    //if (!player.GetModPlayer<PlayerCamera>().WithinRange(NPC, Main.screenWidth + 10, Main.screenHeight + 10))
+                    //{
+                    //    NPC.Center = player.Center;
+                    //}
                 }
 
-                if (player.active && !player.dead && player.GetModPlayer<PlayerCamera>().WithinRange(npc, Main.screenWidth, Main.screenHeight) && player.team == npc.ai[1])
+                if (player.active && !player.dead && player.GetModPlayer<PlayerCamera>().WithinRange(NPC, Main.screenWidth, Main.screenHeight) && player.team == NPC.ai[1])
                 {
-                    npc.timeLeft = 2;
+                    NPC.timeLeft = 22500;
                     if (player.BottomRight.X > maxPosX)
                     {
                         maxPosX = player.BottomRight.X;
@@ -74,19 +78,22 @@ namespace MultiTether.NPCs
             cameraCenter.X = (maxPosX + minPosX) / 2f;
             cameraCenter.Y = (maxPosY + minPosY) / 2f;
             
+            // Debugging
             Main.NewText("Camera position: " + cameraCenter.X.ToString() + ", " + cameraCenter.Y.ToString());
-            Main.NewText("Camera Player: " + npc.ai[0].ToString());
-            Main.NewText("Camera Team: " + npc.ai[1].ToString());
+            Main.NewText("Camera Player: " + NPC.ai[0].ToString());
+            Main.NewText("Camera Team: " + NPC.ai[1].ToString());
             
-            if (Vector2.Distance(npc.Center, cameraCenter) <= 10)
+            if (Vector2.Distance(Main.player[(int)NPC.ai[0] - 1].Center, cameraCenter) <= 8 || Vector2.Distance(NPC.Center, cameraCenter) <= 8)
             {
-                npc.Center = cameraCenter;
-                npc.velocity = Vector2.Zero;
+                NPC.Center = cameraCenter;
+                NPC.velocity = Vector2.Zero;
             }
             else
             {
                 //npc.velocity = speed * Vector2.Normalize(cameraCenter - npc.Center);
-                npc.velocity = (cameraCenter - npc.Center) / 2;
+                //npc.Center = cameraCenter;
+                NPC.velocity.X += (cameraCenter.X - NPC.Center.X) * 0.1f;
+                NPC.velocity.Y += (cameraCenter.Y - NPC.Center.Y) * 0.1f;
             }
         }
     }
